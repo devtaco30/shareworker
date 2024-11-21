@@ -1,0 +1,12 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+logging:
+  level:
+    root: INFO
+    org.apache.kafka: ERROR
+    org.apache.kafka.clients: ERROR
+    org.apache.kafka.common: ERROR
+    org.apache.kafka.streams: ERROR
+    org.apache.kafka.streams.processor: ERROR
