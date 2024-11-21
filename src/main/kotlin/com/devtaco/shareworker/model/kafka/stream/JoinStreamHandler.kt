@@ -233,11 +233,11 @@ class JoinStreamHandler(
             summaryList = summaryPayload.summaryList
         )
 
+        // 비동기 작업을 별도로 실행
         applicationCoroutineScope.launch {
             payloadChannel.sendPayload(completePayload)
+            sendAndCheckTombstone(identifier, SHARE_REPARTITION_TOPIC)
         }
-
-        sendAndCheckTombstone(identifier, SHARE_REPARTITION_TOPIC)
 
         return completePayload
     }
@@ -245,32 +245,42 @@ class JoinStreamHandler(
     /**
      * Tombstone 메시지 (key 에 null 을 적용하면, delete 로 인식한다) 를 전송하고, 삭제 여부를 확인하는 메서드
      */
-    fun sendAndCheckTombstone(identifier: String, topic: String) {
-        // KafkaTemplate의 send() 메서드에서 반환된 ListenableFuture를 CompletableFuture로 변환
-        log.info { "Sending tombstone message for key [$identifier] to topic $topic ===> NULL" }
-        kafkaProducer.sendTombstone(topic, identifier)
-            .thenAccept { result ->
-                log.info { "Tombstone message for key [$identifier] sent successfully to ${result.recordMetadata.topic()}, partition=${result.recordMetadata.partition()}, offset=${result.recordMetadata.offset()}" }
-                checkTombstoneState(identifier)
-            }.exceptionally { ex ->
-                log.error { "Failed to send tombstone for key [$identifier]: ${ex.message}" }
-                null
-            }
+    suspend fun sendAndCheckTombstone(identifier: String, topic: String) {
+        try {
+            log.info { "Sending tombstone message for key [$identifier] to topic $topic ===> NULL" }
+
+            // suspend 함수 호출
+            kafkaProducer.sendTombstone(topic, identifier)
+
+            log.info { "Tombstone message for key [$identifier] sent successfully to topic $topic" }
+
+            // Tombstone 상태 확인
+            checkTombstoneState(identifier)
+        } catch (ex: Exception) {
+            log.error { "Failed to send tombstone for key [$identifier]: ${ex.message}" }
+        }
     }
 
 
     /**
      * Tombstone 메시지를 전송한 후, 해당 데이터가 삭제되었는지 확인헌더,
      */
-    fun checkTombstoneState(identifier: String) {
+    suspend fun checkTombstoneState(identifier: String) {
         log.info { "Checking tombstone state for key [$identifier]" }
-        Thread.sleep(5000L)
+
+        // 비동기적으로 5초 대기
+        delay(5000L)
+
         val store = getKTableStore() ?: run {
-            log.error { "Failed to get KTable store. Skipping tombstone check....." }
+            log.error { "Failed to get KTable store. Skipping tombstone check." }
             return
         }
+
         val result = store[identifier]
-        log.info { if (result == null) "Key $identifier has been tombstoned and deleted from the KTable." else "Key $identifier is still present in the KTable." }
+        log.info {
+            if (result == null) "Key $identifier has been tombstoned and deleted from the KTable."
+            else "Key $identifier is still present in the KTable."
+        }
     }
 
     /**
