@@ -1,6 +1,6 @@
-package com.devtaco.shareworker.model.kafka.payload
+package com.devtaco.shareworker.event.kafka.payload
 
-import com.devtaco.shareworker.model.kafka.stream.JoinStreamHandler
+import com.devtaco.shareworker.event.kafka.stream.JoinStreamHandler
 import jakarta.validation.constraints.NotNull
 
 /**

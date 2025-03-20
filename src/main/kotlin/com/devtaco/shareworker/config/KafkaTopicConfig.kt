@@ -14,7 +14,7 @@ class KafkaTopicConfig {
 
     @Bean
     fun shareRepartitionTopic(): NewTopic {
-        return TopicBuilder.name(SHARE_REPARTITION_TOPIC)
+        return TopicBuilder.name(TOPIC_A)
             .partitions(1)
             .replicas(1)
             .build()
@@ -22,15 +22,15 @@ class KafkaTopicConfig {
 
     @Bean
     fun summaryRepartitionTopic(): NewTopic {
-        return TopicBuilder.name(SUMMARY_REPARTITION_TOPIC)
+        return TopicBuilder.name(TOPIC_B)
             .partitions(1)
             .replicas(1)
             .build()
     }
 
     companion object {
-        const val SHARE_REPARTITION_TOPIC = "share-repartition"
-        const val SUMMARY_REPARTITION_TOPIC = "summary-complete-repartition"
+        const val TOPIC_A = "topic-a"
+        const val TOPIC_B = "topic-b"
     }
 
 }

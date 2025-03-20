@@ -1,4 +1,4 @@
-package com.devtaco.shareworker.model.kafka.producer
+package com.devtaco.shareworker.event.kafka.producer
 
 import kotlinx.coroutines.future.await
 import mu.KotlinLogging

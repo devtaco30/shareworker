@@ -1,4 +1,4 @@
-package com.devtaco.shareworker.model.kafka
+package com.devtaco.shareworker.event.kafka
 
 import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.Consumer

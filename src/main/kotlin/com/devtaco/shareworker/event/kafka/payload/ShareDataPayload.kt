@@ -1,4 +1,4 @@
-package com.devtaco.shareworker.model.kafka.payload
+package com.devtaco.shareworker.event.kafka.payload
 
 import jakarta.validation.constraints.NotNull
 

@@ -1,12 +1,12 @@
-package com.devtaco.shareworker.model.kafka.consumer
+package com.devtaco.shareworker.event.kafka.consumer
 
-import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.SHARE_REPARTITION_TOPIC
-import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.SUMMARY_REPARTITION_TOPIC
-import com.devtaco.shareworker.model.kafka.payload.Payload
-import com.devtaco.shareworker.model.kafka.payload.ShareDataPayload
-import com.devtaco.shareworker.model.kafka.payload.SummaryCompletePayload
-import com.devtaco.shareworker.model.kafka.producer.KafkaProducer
-import com.devtaco.shareworker.model.PayloadChannel
+import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.TOPIC_A
+import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.TOPIC_B
+import com.devtaco.shareworker.event.kafka.payload.Payload
+import com.devtaco.shareworker.event.kafka.payload.ShareDataPayload
+import com.devtaco.shareworker.event.kafka.payload.SummaryCompletePayload
+import com.devtaco.shareworker.event.kafka.producer.KafkaProducer
+import com.devtaco.shareworker.event.channel.PayloadChannel
 import com.devtaco.shareworker.utils.MoshiBuilder
 import com.squareup.moshi.Moshi
 import jakarta.validation.Validation
@@ -26,13 +26,13 @@ class ShareDataConsumer(
     suspend fun receive(payload: String) {
         val shareDataPayload = parseAndValidate<ShareDataPayload>(payload)
         payloadChannel.sendPayload(shareDataPayload)
-        kafkaProducer.produce(SHARE_REPARTITION_TOPIC, shareDataPayload.identifier, payload)
+        kafkaProducer.produce(TOPIC_A, shareDataPayload.identifier, payload)
     }
 
     @KafkaListener(topics = [SUMMARY_COMPLETE], errorHandler = "kafkaErrorHandler")
     suspend fun joinSummaryComplete(payload: String) {
         val summaryCompletePayload = parseAndValidate<SummaryCompletePayload>(payload)
-        kafkaProducer.produce(SUMMARY_REPARTITION_TOPIC, summaryCompletePayload.identifier, payload)
+        kafkaProducer.produce(TOPIC_B, summaryCompletePayload.identifier, payload)
     }
 
     private inline fun <reified T> parseAndValidate(payload: String): T {

@@ -1,4 +1,4 @@
-package com.devtaco.shareworker.model.kafka
+package com.devtaco.shareworker.event.kafka
 
 import com.devtaco.shareworker.model.worker.ShareWorker
 import com.devtaco.shareworker.repository.mongo.model.ShareTarget

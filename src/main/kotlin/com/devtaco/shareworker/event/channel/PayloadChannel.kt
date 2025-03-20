@@ -1,6 +1,6 @@
-package com.devtaco.shareworker.model
+package com.devtaco.shareworker.event.channel
 
-import com.devtaco.shareworker.model.kafka.payload.Payload
+import com.devtaco.shareworker.event.kafka.payload.Payload
 import kotlinx.coroutines.channels.Channel
 import org.springframework.stereotype.Component
 

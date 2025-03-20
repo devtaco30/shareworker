@@ -1,14 +1,14 @@
-package com.devtaco.shareworker.model.kafka.stream
+package com.devtaco.shareworker.event.kafka.stream
 
-import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.SHARE_REPARTITION_TOPIC
-import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.SUMMARY_REPARTITION_TOPIC
-import com.devtaco.shareworker.model.kafka.consumer.ShareDataConsumer
-import com.devtaco.shareworker.model.kafka.payload.Payload
-import com.devtaco.shareworker.model.kafka.payload.ShareDataPayload
-import com.devtaco.shareworker.model.kafka.payload.SnsSharePayload
-import com.devtaco.shareworker.model.kafka.payload.SummaryCompletePayload
-import com.devtaco.shareworker.model.kafka.producer.KafkaProducer
-import com.devtaco.shareworker.model.PayloadChannel
+import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.TOPIC_A
+import com.devtaco.shareworker.config.KafkaTopicConfig.Companion.TOPIC_B
+import com.devtaco.shareworker.event.kafka.consumer.ShareDataConsumer
+import com.devtaco.shareworker.event.kafka.payload.Payload
+import com.devtaco.shareworker.event.kafka.payload.ShareDataPayload
+import com.devtaco.shareworker.event.kafka.payload.SnsSharePayload
+import com.devtaco.shareworker.event.kafka.payload.SummaryCompletePayload
+import com.devtaco.shareworker.event.kafka.producer.KafkaProducer
+import com.devtaco.shareworker.event.channel.PayloadChannel
 import com.devtaco.shareworker.utils.moshiSerde
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -50,10 +50,10 @@ class JoinStreamHandler(
     private val kafkaProducer: KafkaProducer,
 ) {
 
-    @Value("\${spring.kafka.streams.application-id}")
+    @Value("\${app.kafka.streams.application-id}")
     private lateinit var applicationId: String
 
-    @Value("\${spring.kafka.streams.bootstrap-servers}")
+    @Value("\${app.kafka.streams.servers}")
     private lateinit var bootstrapServers: String
 
     private lateinit var summaryJoinStream: KafkaStreams
@@ -140,7 +140,7 @@ class JoinStreamHandler(
             // 스냅샷된 데이터를 기반으로 정리 작업 수행
             entriesToClean.forEach { (key, _) ->
                 log.info { "Deleting expired entry for key=$key from KTable" }
-                sendAndCheckTombstone(key, SHARE_REPARTITION_TOPIC)
+                sendAndCheckTombstone(key, TOPIC_A)
             }
 
             log.info { "Completed cleanup for ${entriesToClean.size} expired entries from KTable." }
@@ -157,7 +157,7 @@ class JoinStreamHandler(
 
         // KTable 정의
         val originDataTable: KTable<String, ShareDataPayload> = builder.table(
-            SHARE_REPARTITION_TOPIC,
+            TOPIC_A,
             Consumed.with(Serdes.String(), moshiSerde<ShareDataPayload>()),
             Materialized.`as`<String, ShareDataPayload, KeyValueStore<Bytes, ByteArray>>(
                 ORIGIN_DATA_KTABLE
@@ -194,7 +194,7 @@ class JoinStreamHandler(
         // KStream 정의
         // 해당 데이터는 join 이 끝나면 삭제된다. tombstone 메시지를 전송하여 삭제한다.
         val summaryDataStream: KStream<String, SummaryCompletePayload> = builder.stream(
-            SUMMARY_REPARTITION_TOPIC,
+            TOPIC_B,
             Consumed.with(Serdes.String(), moshiSerde<SummaryCompletePayload>())
         ).filter { key, value ->
             key != null && value != null
@@ -236,7 +236,7 @@ class JoinStreamHandler(
         // 비동기 작업을 별도로 실행
         applicationCoroutineScope.launch {
             payloadChannel.sendPayload(completePayload)
-            sendAndCheckTombstone(identifier, SHARE_REPARTITION_TOPIC)
+            sendAndCheckTombstone(identifier, TOPIC_A)
         }
 
         return completePayload

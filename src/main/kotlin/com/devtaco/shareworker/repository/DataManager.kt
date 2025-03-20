@@ -14,7 +14,7 @@ class DataManager(
 
     private val sharedMutex = Mutex()
 
-    fun findTargetApiParameter(target: String): ShareTargetParams =
+    fun findServiceConfig(target: String): ShareTargetParams =
         mongoRepository.getShareTargetParams(target)
 
     fun findLatestShareLogs(shareDataId: Int, target: String) =

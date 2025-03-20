@@ -9,5 +9,6 @@ data class ShareTargetParams(
     @Id
     val id: ObjectId,
     val target: String,
-    val apiToken: String
+    val apiToken: String,
+    val execute: Boolean,
 )

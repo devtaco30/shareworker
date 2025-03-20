@@ -1,4 +1,4 @@
-package com.devtaco.shareworker.model.kafka.payload
+package com.devtaco.shareworker.event.kafka.payload
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import jakarta.validation.constraints.NotNull
