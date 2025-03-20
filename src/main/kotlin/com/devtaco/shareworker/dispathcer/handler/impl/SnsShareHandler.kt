@@ -4,6 +4,7 @@ import com.devtaco.shareworker.config.GlobalConstants.OPERATION_TYPE_A
 import com.devtaco.shareworker.config.GlobalConstants.OPERATION_TYPE_B
 import com.devtaco.shareworker.config.GlobalConstants.OPERATION_TYPE_C
 import com.devtaco.shareworker.dispathcer.handler.AbstractShareHandler
+import com.devtaco.shareworker.dispathcer.handler.HandlerCircuitBreaker
 import com.devtaco.shareworker.event.kafka.payload.SnsSharePayload
 import com.devtaco.shareworker.repository.DataManager
 import com.devtaco.shareworker.repository.mongo.model.ShareLog
@@ -40,6 +41,8 @@ class SnsShareHandler(
         const val DESTINATION = "service-a"
     }
 
+    override val circuitBreaker = HandlerCircuitBreaker()
+
     /**
      * 코루틴 예외 처리기
      * 시스템 레벨에서 발생한 예외를 로깅하고 슬랙으로 알림을 보낸다
@@ -53,6 +56,12 @@ class SnsShareHandler(
      * 지원하는 작업 타입: A, B, C
      */
     override fun canHandle(event: SnsSharePayload): Boolean {
+        // CircuitBreaker 상태 체크
+        if (circuitBreaker.shouldBlock()) {
+            log.warn { "Circuit breaker is blocking requests for $destination" }
+            return false
+        }
+        // 비즈니스 로직 체크
         return when (event.actionOperator) {
             OPERATION_TYPE_A, OPERATION_TYPE_B, OPERATION_TYPE_C -> true
             else -> false
@@ -71,8 +80,10 @@ class SnsShareHandler(
                         sendToDestination(event)
                     }
                     saveOperationLog(result)
+                    circuitBreaker.recordSuccess()
                 } catch (e: Exception) {
                     handleFailure(event)
+                    circuitBreaker.recordFailure()
                     throw e
                 }
             }

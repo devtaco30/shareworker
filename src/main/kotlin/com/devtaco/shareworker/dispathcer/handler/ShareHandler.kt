@@ -1,5 +1,6 @@
 package com.devtaco.shareworker.dispathcer.handler
 
+import CircuitBreakerHandler
 import com.devtaco.shareworker.event.kafka.payload.Payload
 
 /**
@@ -8,7 +9,7 @@ import com.devtaco.shareworker.event.kafka.payload.Payload
  * 각각의 핸들러는 특정 타입의 페이로드를 처리하며,
  * 해당 페이로드를 지정된 대상(destination)으로 전송하는 역할을 수행한다.
  */
-interface ShareHandler<T : Payload> {
+interface ShareHandler<T : Payload> : CircuitBreakerHandler {
 
     /**
      * 핸들러가 담당하는 대상 서비스의 식별자
